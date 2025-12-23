@@ -1,3 +1,12 @@
+//
+//  MigraineZenLoadingWave.swift
+//  Created by xoyoja on 12/23/25. 
+//  
+//  https://github.com/xoyoja/migrainezenLoadingWave
+//
+//  ------------------------------------------------------------------------
+//  MIT License
+
 import SwiftUI
 
 /// A reusable, highly customizable loading component featuring organic sine wave animations
