@@ -1,6 +1,7 @@
 # Loading Wave
 Multi-waveform waiting progress view: This is a lightweight Swift UI component we built for the migraine diary app, MigraineZen (https://migrainezen-app.com/).
 
+https://github.com/user-attachments/assets/44d58802-61d1-4179-bad3-7287583443c6
 https://github.com/user-attachments/assets/8a8a0a3a-893e-48de-b4b8-44f1520d314c
 
 A reusable, highly customizable loading component featuring organic sine wave animations
