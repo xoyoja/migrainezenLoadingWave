@@ -25,10 +25,46 @@ requiring a calming, fluid loading state.
 # Usage 
 1.XCode > Settings > Components, Look for "Metal Shader Converter" or "Metal Developer Tools" in the list. Click the download arrow next to it.
 2.Use the component in your SwiftUI view, example:
+
 ```swift
 MigraineZenLoadingWave(
     texts: ["Waiting for AI response...", "Syncing Apple Health...", "Anylyzing Headache Triggers ..."],
     color: .gray,
     speed: 2.0
 )
+```
+
+```swift
+LoadingIndicator(
+            style: .skeleton,
+            tint: .purple
+        )
+        
+        SkeletonView(isLoading: true) {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+//                    Circle()
+                    ConcentricCirclesView(color1: .gray.opacity(0.5), color2: .black.opacity(0.5), outFrame: 30, innerFrame: 20)
+                    
+                    Text("Mock name")
+                        .font(.title)
+                }
+                
+                Text("")
+                    .font(.headline)
+                
+                Text("Mock Tutorial  ")
+                    .font(.headline)
+                
+                Text("Mock Tutorial Title terer")
+                    .font(.headline)
+                                
+                Text("Mock This")
+                    .font(.subheadline)
+                
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(.systemGray6))
+        }
 ```
