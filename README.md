@@ -16,7 +16,8 @@ requiring a calming, fluid loading state.
 - Fully adaptable colors and typography.
 
 # Usage 
-
+1.XCode > Settings > Components, Look for "Metal Shader Converter" or "Metal Developer Tools" in the list. Click the download arrow next to it.
+2.Use the component in your SwiftUI view, example:
 ```swift
 MigraineZenLoadingWave(
     texts: ["Waiting for AI response...", "Syncing Apple Health...", "Anylyzing Headache Triggers ..."],

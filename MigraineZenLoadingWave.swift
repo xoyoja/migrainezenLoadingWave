@@ -24,54 +24,25 @@ public struct MigraineZenLoadingWave: View {
     
     // MARK: - Configuration Properties
     
-    /// The array of messages to cycle through while loading.
     var texts: [String]
-    
-    /// The primary color of the waves.
     var color: Color
-    
-    /// The font style for the cycling text.
     var textFont: Font
-    
-    /// The number of overlapping sine waves to render.
     var waveCount: Int
-    
-    /// The vertical amplitude (height) of the waves.
     var amplitude: Double
-    
-    /// The frequency (width tightness) of the waves.
     var frequency: Double
-    
-    /// The duration (in seconds) for one full wave animation cycle.
     var speed: Double
-    
-    /// The duration (in seconds) each text string is displayed before switching.
     var textCycleInterval: TimeInterval
     
     // MARK: - Internal State
     
-    /// Controls the horizontal phase shift of the sine waves.
     @State private var phase: Double = 0.0
-    
-    /// Tracks the currently displayed text index.
     @State private var textIndex: Int = 0
     
     // MARK: - Initializer
     
-    /// Creates a new Migraine Zen Loading Wave component.
-    ///
-    /// - Parameters:
-    ///   - texts: List of strings to cycle through. Defaults to generic loading messages.
-    ///   - color: Base color for the waves. Opacity is handled automatically per wave layer.
-    ///   - textFont: Font for the status text. Defaults to `.caption`.
-    ///   - waveCount: Number of layered waves. Higher counts create a denser "mesh" effect. Defaults to 3.
-    ///   - amplitude: Vertical strength of the wave. Defaults to 12.
-    ///   - frequency: How tight the waves are. Defaults to 8.
-    ///   - speed: Animation loop duration in seconds. Lower is faster. Defaults to 2.0.
-    ///   - textCycleInterval: Time in seconds between text updates. Defaults to 2.5.
     public init(
         texts: [String] = ["Loading...", "Please wait..."],
-        color: Color = Color.gray,
+        color: Color = Color.blue,
         textFont: Font = .caption,
         waveCount: Int = 3,
         amplitude: Double = 12,
@@ -82,7 +53,7 @@ public struct MigraineZenLoadingWave: View {
         self.texts = texts
         self.color = color
         self.textFont = textFont
-        self.waveCount = max(1, waveCount) // Ensure at least 1 wave
+        self.waveCount = max(1, waveCount)
         self.amplitude = amplitude
         self.frequency = frequency
         self.speed = speed
@@ -93,51 +64,82 @@ public struct MigraineZenLoadingWave: View {
     
     public var body: some View {
         VStack(spacing: 16) {
-            // 1. Wave Visualization
+            
+            // THE LIQUID WAVE CONTAINER
             ZStack {
+                // Layer A: The "Fluid" Background
+                // We use a gradient that is distorted by the LiquidGlass modifier
+                // to create the illusion of water volume.
+                fluidBackgroundLayer
+                    .mask {
+                        // Mask the liquid to the shape of the largest wave
+                        // to prevent it from looking like a square box
+                        SineWaveShape(strength: amplitude, frequency: frequency, phase: phase)
+                            // Close the path to make it a fillable mask
+                            .fill(Color.black)
+                            // Extend downwards to cover the area "under" the water
+                            .overlay(alignment: .bottom) {
+                                Rectangle()
+                                    .frame(height: amplitude * 2) // Approximate depth
+                                    .offset(y: amplitude)
+                            }
+                    }
+                
+                // Layer B: The "Harmonic" Lines
                 ForEach(0..<waveCount, id: \.self) { index in
-                    // Calculate variations based on index to create depth
-                    let progress = Double(index) / Double(waveCount)
-                    let waveOpacity = 0.1 + (0.15 * progress) // 0.1 to 0.25 opacity
-                    let waveFrequency = frequency + (Double(index) * 1.5) // Vary frequency slightly
-                    let wavePhaseOffset = Double(index) * 5.0 // Offset starting phase
-                    let waveLineWidth = 3.0 - (progress * 1.0) // Thinner lines in front
+                    // CENTERED MATH: Calculate deviation from the center index
+                    // This allows the waves to "breathe" around a central core rather than stacking linearly
+                    let deviation = Double(index) - Double(waveCount) / 2.0
+                    
+                    // 1. Frequency: Reduced spread to 2% (0.02)
+                    // previously this was `+ (index * 1.5)`, which caused the unnatural gaps.
+                    let waveFreq = frequency * (1.0 + (deviation * 0.02))
+                    
+                    // 2. Phase: Tight locking
+                    // Small offset ensures they don't look like a single line, but stay "bundled"
+                    let wavePhase = phase + (deviation * 0.2)
+                    
+                    // 3. Amplitude Tapering
+                    // Outer waves are 10% smaller to create a 3D cylindrical feel
+                    let waveAmp = amplitude * (1.0 - (abs(deviation) * 0.1))
+                    
+                    // 4. Opacity Falloff
+                    // Center wave is brightest (0.6), edges fade out
+                    let opacity = 0.6 - (abs(deviation) * 0.15)
                     
                     SineWaveShape(
-                        strength: amplitude,
-                        frequency: waveFrequency,
-                        phase: phase + wavePhaseOffset
+                        strength: waveAmp,
+                        frequency: waveFreq,
+                        phase: wavePhase
                     )
-                    .stroke(color.opacity(waveOpacity), lineWidth: waveLineWidth)
+                    .stroke(
+                        color.opacity(max(0.1, opacity)), // Ensure min opacity
+                        lineWidth: 1.5 // Thinner lines for organic feel
+                    )
+                    .blendMode(.plusLighter)
                 }
             }
-            .frame(height: amplitude * 4) // Ensure container fits the wave height
+            .frame(height: amplitude * 5) // Container height
+            .drawingGroup() // Optimizes complex alpha blending
             
-            // 2. Cycling Text
+            // TEXT INDICATOR
             if !texts.isEmpty {
                 Text(texts[textIndex])
                     .font(textFont)
-                    .foregroundStyle(.secondary)
-                    // Numeric text transition handles character swapping smoothly
+                    .foregroundStyle(.white)
                     .contentTransition(.numericText())
-                    .id(textIndex) // Explicit ID to force transition on change
+                    .id(textIndex)
             }
         }
         .onAppear {
-            // Start Wave Animation
             withAnimation(.linear(duration: speed).repeatForever(autoreverses: false)) {
                 phase = .pi * 2
             }
         }
         .task {
-            // Start Text Cycling Loop (Modern Concurrency)
-            // This replaces the old Timer logic and automatically cancels when the view disappears.
             if texts.count > 1 {
-                // Infinite loop until task is cancelled
                 while !Task.isCancelled {
                     try? await Task.sleep(for: .seconds(textCycleInterval))
-                    
-                    // Update UI on Main Actor
                     withAnimation(.snappy) {
                         textIndex = (textIndex + 1) % texts.count
                     }
@@ -148,22 +150,39 @@ public struct MigraineZenLoadingWave: View {
         .accessibilityLabel(texts.isEmpty ? "Loading" : texts[textIndex])
         .accessibilityAddTraits(.updatesFrequently)
     }
+    
+    // MARK: - Subviews
+    
+    @ViewBuilder
+    private var fluidBackgroundLayer: some View {
+        // Creates the "Water" texture that gets distorted
+        LinearGradient(
+            colors: [
+                color.opacity(0.15), // Slightly increased opacity for better visibility
+                color.opacity(0.35),
+                color.opacity(0.05)
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        // UPDATED PARAMETERS FOR NEW SHADER:
+        // Intensity: Reduced to 3.0 (was 20.0 scale in shader, so we feed small nums)
+        // Frequency: Increased to 8.0 to create more "peaks"
+        // Speed: Slower (0.5) looks more viscous/glassy. Fast looks like water.
+        .liquidGlass(intensity: 3.0, frequency: 8.0, speed: 0.8)
+        
+        // Optional: Add a subtle blend mode to make the colors "pop" like refracted light
+        .blendMode(.overlay)
+    }
 }
 
-// MARK: - Helper Shape
+// MARK: - 3. Helper Shape
 
-/// A pure mathematical shape representing a sine wave.
-///
-/// Logic: `y = A * sin(kx + p)`
-internal struct SineWaveShape: Shape {
-    /// The amplitude (height) of the wave.
+struct SineWaveShape: Shape {
     var strength: Double
-    /// The frequency (width/tightness) of the wave.
     var frequency: Double
-    /// The phase shift (horizontal position).
     var phase: Double
     
-    /// Allows SwiftUI to interpolate values for smooth animation.
     var animatableData: Double {
         get { phase }
         set { phase = newValue }
@@ -175,10 +194,8 @@ internal struct SineWaveShape: Shape {
         let height = Double(rect.height)
         let midHeight = height / 2
         
-        // Ensure we don't divide by zero if width is tiny
         let wavelength = width > 0 ? width / frequency : 1.0
         
-        // Calculate start point to avoid "vertical line" artifact at x=0
         let startX: Double = 0
         let startRelativeX = startX / wavelength
         let startSine = sin(startRelativeX + phase)
@@ -186,7 +203,6 @@ internal struct SineWaveShape: Shape {
         
         path.move(to: CGPoint(x: startX, y: startY))
         
-        // Plot points across the width
         for x in stride(from: 0, through: width, by: 1) {
             let relativeX = x / wavelength
             let sine = sin(relativeX + phase)
@@ -195,6 +211,68 @@ internal struct SineWaveShape: Shape {
         }
         
         return Path(path.cgPath)
+    }
+}
+
+
+// MARK: - Helper Shape
+
+/// Applies a refractive, moving liquid texture to any view.
+struct LiquidGlassModifier: ViewModifier {
+    var intensity: Double // How strong the ripple is (Refractive Index)
+    var frequency: Double // How tight the ripples are
+    var speed: Double     // Viscosity (lower is thicker/slower)
+    
+    // The "Start Date" allows the shader to animate continuously over time
+    @State private var startDate = Date()
+    
+    func body(content: Content) -> some View {
+        TimelineView(.animation) { context in
+            content
+                // Apply the Metal Distortion Shader
+                .visualEffect { content, proxy in
+                    content
+                        .distortionEffect(
+                            ShaderLibrary.liquidGlassDistortion(
+                                .float2(proxy.size),
+                                .float(startDate.timeIntervalSinceNow * -speed), // Time driver
+                                .float(intensity),
+                                .float(frequency)
+                            ),
+                            maxSampleOffset: .zero // Optimization: Clip sampling to bounds
+                        )
+                }
+        }
+    }
+}
+
+extension View {
+    /// Upgrades the view to the iOS 26 "Liquid Glass" material standard.
+    /// - Parameters:
+    ///   - intensity: Strength of the refraction (Default: 1.5).
+    ///   - frequency: Density of the ripples (Default: 5.0).
+    ///   - speed: Flow rate of the liquid (Default: 2.0).
+    func liquidGlass(intensity: Double = 1.5, frequency: Double = 5.0, speed: Double = 2.0) -> some View {
+        self.modifier(LiquidGlassModifier(intensity: intensity, frequency: frequency, speed: speed))
+    }
+}
+
+
+// MARK: - Previews
+
+#Preview("Liquid Glass Style") {
+    ZStack {
+        Color.black.ignoresSafeArea()
+        
+        MigraineZenLoadingWave(
+            texts: ["Hydrating surfaces...", "Refracting light..."],
+            color: .cyan,
+            waveCount: 5,
+            amplitude: 15,
+            frequency: 8,
+            speed: 4.0
+        )
+        .padding()
     }
 }
 
