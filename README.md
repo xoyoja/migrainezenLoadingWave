@@ -1,5 +1,9 @@
 # Loading Wave
-Multi-waveform waiting progress view: This is a lightweight Swift UI component we built for the migraine diary app, MigraineZen (https://migrainezen-app.com/).
+- Multi-waveform waiting progress view
+- Rainbow-colored shimmering skeleton progress view
+- Text fade-in progress view
+
+--Not-Boring Lightweight Swift UI progress view component we built for the migraine diary app, MigraineZen (https://migrainezen-app.com/).
 
 https://github.com/user-attachments/assets/44d58802-61d1-4179-bad3-7287583443c6
 
