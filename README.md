@@ -5,6 +5,11 @@ https://github.com/user-attachments/assets/44d58802-61d1-4179-bad3-7287583443c6
 
 https://github.com/user-attachments/assets/8a8a0a3a-893e-48de-b4b8-44f1520d314c
 
+https://github.com/user-attachments/assets/93623fa8-2475-4c21-9482-d1ef1391a612
+
+https://github.com/user-attachments/assets/a0f83547-6df8-46b1-a4e2-b7115c4678d1
+
+
 A reusable, highly customizable loading component featuring organic sine wave animations
 and cycling status text.
 
